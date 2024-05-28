@@ -114,6 +114,8 @@ class Trainer:
 
         st_epoch = 0
         best_train_loss = float('inf')
+        cum_train_loss = 1
+        old_cum_train_loss = np.average(cum_train_loss)
 
         if self.train_continue == 'on':
             print(self.checkpoints_dir)
@@ -133,6 +135,7 @@ class Trainer:
                 output_img = model(input_img)
                 loss = criterion(output_img, target_img)
                 train_loss += loss.item() 
+                cum_train_loss += loss.item() 
                 loss.backward()
                 optimizer.step()
                 
@@ -152,15 +155,17 @@ class Trainer:
                     plt.imsave(target_filename, target_img_np[j, :, :, 0], cmap='gray')
                     plt.imsave(output_filename, output_img_np[j, :, :, 0], cmap='gray')
 
+                new_cum_train_loss = np.average(cum_train_loss)
+                if new_cum_train_loss < old_cum_train_loss:
+                    old_cum_train_loss = new_cum_train_loss
+                    self.save(self.checkpoints_dir, model, optimizer, epoch)
+                    print(f"Saved best model at epoch {epoch} with train loss {new_cum_train_loss:.4f}.")
 
-            avg_train_loss = train_loss / len(train_loader)
-            self.writer.add_scalar('Loss/train', avg_train_loss, epoch)
 
-            print(f'Epoch [{epoch}/{self.num_epoch}], Train Loss: {avg_train_loss:.4f}')
+            print(f'Epoch [{epoch}/{self.num_epoch}], Train Loss: {new_cum_train_loss:.4f}')
 
-            if avg_train_loss < best_train_loss:
-                best_train_loss = avg_train_loss
-                self.save(self.checkpoints_dir, model, optimizer, epoch)
-                print(f"Saved best model at epoch {epoch} with train loss {best_train_loss:.4f}.")
+            
+
+            
  
         self.writer.close()
