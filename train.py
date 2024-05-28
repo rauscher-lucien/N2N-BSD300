@@ -56,7 +56,7 @@ class Trainer:
 
     def load(self, checkpoints_dir, model, epoch=[], optimizer=[]):
 
-        dict_net = torch.load('%s/best_model.pth' % (checkpoints_dir))
+        dict_net = torch.load('%s/best_model.pth' % (checkpoints_dir), map_location=torch.device('cpu'))
 
         model.load_state_dict(dict_net['model'])
         optimizer.load_state_dict(dict_net['optimizer'])
@@ -88,7 +88,7 @@ class Trainer:
 
         transform_inv_train = transforms.Compose([
             ToNumpy(),
-            Denormalize8Bit(mean, std)
+            Denormalize(mean, std)
         ])
 
 

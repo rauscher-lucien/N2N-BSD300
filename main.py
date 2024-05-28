@@ -78,9 +78,9 @@ def main():
         print(f"Train continue: {train_continue}")
     else:
         # If not running on the server, perhaps use a default data_dir or handle differently
-        data_dir = r"C:\Users\rausc\Documents\EMBL\data\BSD300_one\double_noisy"
-        train_file_path = r"C:\Users\rausc\Documents\EMBL\data\BSD300_one\double_noisy\12003_noisy_1.jpg"
-        target_file_path = r"C:\Users\rausc\Documents\EMBL\data\BSD300_one\double_noisy\12003_noisy_2.jpg"
+        data_dir = r"Z:\members\Rauscher\data\BSD300_one\double_noisy"
+        train_file_path = r"Z:\members\Rauscher\data\BSD300_one\double_noisy\noised_12003_16bit_gray.tif"
+        target_file_path = r"Z:\members\Rauscher\data\BSD300_one\double_noisy\noised2_12003_16bit_gray.tif"
         project_dir = os.path.join('C:\\', 'Users', 'rausc', 'Documents', 'EMBL', 'projects', 'N2N-BSD300')
         project_name = 'BSD-test_1'
         train_continue = 'off'

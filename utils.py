@@ -249,21 +249,27 @@ def plot_intensity_line_distribution(image, title='1', bins=200):
 
 def compute_global_mean_and_std(dataset_path, checkpoints_path):
     """
-    Computes and saves the global mean and standard deviation across all JPEG images
-    in the given directory and its subdirectories, saving the results in the same directory.
+    Computes and saves the global mean and standard deviation across all JPEG and TIFF images
+    in the given directory and its subdirectories, saving the results in the specified path.
 
     Parameters:
-    - dataset_path: Path to the directory containing the JPEG files.
+    - dataset_path: Path to the directory containing the image files.
     - checkpoints_path: Path where the normalization parameters will be saved.
     """
     all_means = []
     all_stds = []
+    
     for subdir, _, files in os.walk(dataset_path):
         for filename in files:
-            if filename.lower().endswith('.jpg'):
+            if filename.lower().endswith(('.jpg', '.tif', '.tiff')):  # Check for both JPEG and TIFF files
                 filepath = os.path.join(subdir, filename)
-                image = Image.open(filepath).convert('L')  # Convert to grayscale if not already
-                img_array = np.array(image, dtype=np.float32)  # Convert to float for more accurate mean/std computation
+                image = Image.open(filepath)
+                
+                if image.mode == 'I;16':  # Check if the image is 16-bit grayscale
+                    img_array = np.array(image, dtype=np.float32)  # Convert to float for more accurate mean/std computation
+                else:
+                    img_array = np.array(image.convert('L'), dtype=np.float32)  # Convert to 8-bit grayscale if not 16-bit
+
                 all_means.append(np.mean(img_array))
                 all_stds.append(np.std(img_array))
 

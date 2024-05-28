@@ -52,16 +52,7 @@ sys.stderr = StreamToLogger(logging.getLogger('STDERR'), logging.ERROR)
 
 
 def load(checkpoints_dir, model, epoch=1, optimizer=None, device='cpu'):
-    """
-    Load the model and optimizer states.
 
-    :param dir_chck: Directory where checkpoint files are stored.
-    :param netG: The Generator model (or any PyTorch model).
-    :param epoch: Epoch number to load.
-    :param optimG: The optimizer for the Generator model.
-    :param device: The device ('cpu' or 'cuda') to load the model onto.
-    :return: The model, optimizer, and epoch, all appropriately loaded to the specified device.
-    """
 
     # Ensure optimG is not None; it's better to explicitly check rather than using a mutable default argument like []
     if optimizer is None:
@@ -108,9 +99,10 @@ def main():
         print(f"Project name: {project_name}")
     else:
         # If not running on the server, perhaps use a default data_dir or handle differently
-        data_dir = r"C:\Users\rausc\Documents\EMBL\data\BSD300_one\noisy"
-        project_dir = r"C:\Users\rausc\Documents\EMBL\projects\N2V-BSD300\test_2"
-        inference_name = 'OCT-data-1'
+        train_file_path = r"C:\Users\rausc\Documents\EMBL\data\BSD300_one\double_noisy\12003_noisy_1.jpg"
+        target_file_path = r"C:\Users\rausc\Documents\EMBL\data\BSD300_one\double_noisy\12003_noisy_2.jpg"
+        project_dir = r"C:\Users\rausc\Documents\EMBL\projects\N2N-BSD300\BSD-test_1"
+        inference_name = '1'
 
     #********************************************************#
 
@@ -137,20 +129,19 @@ def main():
     mean, std = load_normalization_params(checkpoints_dir)
     
     inf_transform = transforms.Compose([
-        Normalize(mean, std),
-        CropToMultipleOf32Inference(),
+        NormalizePair(mean, std),
+        CropToMultipleOf16Inference(),
         ToTensorInference(),
     ])
 
     inv_inf_transform = transforms.Compose([
-        BackTo01Range(),
-        ToNumpy()
+        ToNumpy(),
+        Denormalize8Bit(mean, std)
     ])
 
-    inf_dataset = DatasetLoadJPG(
-        data_dir,
-        transform=inf_transform
-    )
+    inf_dataset = N2NJPGDataset(input_image_path=train_file_path,
+                                      target_image_path=target_file_path,
+                                      transform=inf_transform)
 
     batch_size = 8
     print("Dataset size:", len(inf_dataset))
@@ -173,29 +164,32 @@ def main():
     with torch.no_grad():
         model.eval()
 
-        # Initialize list to store numpy arrays for output images
-        output_images = []
-
         for batch, data in enumerate(inf_loader):
-            input_stack = data.to(device)
+            input_img, _ = data
 
             # Generate the output images
-            output_img = model(input_stack)
+            output_img = model(input_img)
             output_img_np = inv_inf_transform(output_img)  
-            for img in output_img_np:
-                output_images.append(img)
 
-            print(f'BATCH {batch+1}/{len(inf_loader)}')
+            plot_intensity_line_distribution(input_img, 'in#put')
+            plot_intensity_line_distribution(output_img_np, 'out#put')
 
-    # Clip output images to the 0-1 range
-    output_images_clipped = [np.clip(img, 0, 1) for img in output_images]
+            # Remove channel dimension if single channel
+            output_img_clipped = output_img_np.squeeze(0)
+            output_img_clipped = output_img_clipped.squeeze(-1)
 
-    # Stack and save output images
-    output_stack = np.stack(output_images_clipped, axis=0).squeeze(-1)  # Remove channel dimension if single channel
-    filename = f'output_stack-{inference_name}-epoch{epoch}.TIFF'
-    tifffile.imwrite(os.path.join(inference_folder, filename), output_stack)
+            # Convert the numpy array to a PIL Image
+            output_img_pil = Image.fromarray((output_img_clipped).astype(np.uint8))
 
-    print("Output TIFF stack created successfully.")
+            # Define the filename and the path
+            filename = f'output_image-{inference_name}-epoch{epoch}.jpg'
+            filepath = os.path.join(inference_folder, filename)
+
+            # Save the image as a JPEG file
+            output_img_pil.save(filepath, 'JPEG')
+
+            print("Output JPEG image created successfully.")
+
 
 
 if __name__ == '__main__':

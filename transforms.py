@@ -363,7 +363,7 @@ class CropToMultipleOf16Inference(object):
     This is particularly useful for models that require input dimensions to be divisible by certain values.
     """
 
-    def __call__(self, img):
+    def __call__(self, data):
         """
         Args:
             img (numpy.ndarray): Image to be cropped.
@@ -371,7 +371,8 @@ class CropToMultipleOf16Inference(object):
         Returns:
             numpy.ndarray: Cropped image.
         """
-        h, w = img.shape[:2]  # Assuming img is a numpy array with shape (H, W, C) or (H, W)
+        input_img = data[0]
+        _, h, w = input_img.shape  # Assuming img is a numpy array with shape (H, W, C) or (H, W)
 
         # Compute new dimensions to be multiples of 16
         new_h = h - (h % 16)
@@ -386,9 +387,9 @@ class CropToMultipleOf16Inference(object):
         id_x = np.arange(left, left + new_w, 1).astype(np.int32)
 
         # Crop the image
-        cropped_image = img[id_y, id_x]
+        cropped_image = input_img[:, id_y, id_x]
 
-        return cropped_image
+        return cropped_image, cropped_image
 
 
 class CropToMultipleOf16Video(object):
@@ -492,7 +493,7 @@ class ToNumpy(object):
 
 
 
-class Denormalize8Bit(object):
+class Denormalize(object):
     """
     Denormalize an image using mean and standard deviation, then convert it to 16-bit format.
     
@@ -526,6 +527,6 @@ class Denormalize8Bit(object):
         img_denormalized = (img * self.std) + self.mean
 
         # Scale the image to the range [0, 65535] and convert to 16-bit unsigned integer
-        img_8bit = img_denormalized.astype(np.uint8)
+        img_denormalized = img_denormalized.astype(np.uint16)
         
-        return img_8bit
+        return img_denormalized
