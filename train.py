@@ -135,9 +135,6 @@ class Trainer:
                 train_loss += loss.item() 
                 loss.backward()
                 optimizer.step()
-
-                plot_intensity_line_distribution(input_img, 'input')
-                plot_intensity_line_distribution(output_img, 'output')
                 
             if epoch % self.num_freq_disp == 0:
                 input_img_np = transform_inv_train(input_img)
