@@ -94,7 +94,7 @@ def main():
     data_dict['project_dir'] = project_dir
     data_dict['project_name'] = project_name
 
-    data_dict['num_epoch'] = 600
+    data_dict['num_epoch'] = 5000
     data_dict['batch_size'] = 8
     data_dict['lr'] = 1e-5
 
