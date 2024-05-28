@@ -126,7 +126,8 @@ class Trainer:
 
             for batch, data in enumerate(train_loader, 0):
                 optimizer.zero_grad()
-                input_img, target_img = data
+                input_img, target_img = data.to(self.device)
+
                 output_img = model(input_img)
                 loss = criterion(output_img, target_img)
                 train_loss += loss.item() 
