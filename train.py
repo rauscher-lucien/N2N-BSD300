@@ -162,7 +162,7 @@ class Trainer:
                     print(f"Saved best model at epoch {epoch} with train loss {new_cum_train_loss:.4f}.")
 
 
-            print(f'Epoch [{epoch}/{self.num_epoch}], Train Loss: {old_cum_train_loss:.4f}')
+            print(f'Epoch [{epoch}/{self.num_epoch}], Train Loss: {np.average(cum_train_loss):.4f}')
 
             
 
