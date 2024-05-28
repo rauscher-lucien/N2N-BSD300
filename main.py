@@ -53,8 +53,9 @@ def main():
 
         parser = argparse.ArgumentParser(description='Process data directory.')
 
-        parser.add_argument('--train_data_dir', type=str, help='Path to the train data directory')
-        parser.add_argument('--val_data_dir', type=str, help='Path to the validation data directory')
+        parser.add_argument('--data_dir', type=str, help='Path to the train data directory')
+        parser.add_argument('--train_file_path', type=str, help='Path to the train file')
+        parser.add_argument('--target_file_path', type=str, help='Path to the target file')
         parser.add_argument('--project_name', type=str, help='Name of the project')
         parser.add_argument('--train_continue', type=str, default='off', choices=['on', 'off'],
                             help='Flag to continue training: "on" or "off" (default: "off")')
@@ -64,14 +65,15 @@ def main():
         args = parser.parse_args()
 
         # Now you can use args.data_dir as the path to your data
-        train_data_dir = args.train_data_dir
-        val_data_dir = args.val_data_dir
+        data_dir = args.data_dir
+        train_file_path = args.train_file_path
+        target_file_path = args.target_file_path
         project_name = args.project_name 
         train_continue = args.train_continue
         project_dir = os.path.join('/g', 'prevedel', 'members', 'Rauscher', 'projects', 'N2N-BSD300')
 
-        print(f"Using train data directory: {train_data_dir}")
-        print(f"Using val data directory: {val_data_dir}")
+        print(f"Using train data directory: {train_file_path}")
+        print(f"Using val data directory: {target_file_path}")
         print(f"Project name: {project_name}")
         print(f"Train continue: {train_continue}")
     else:
