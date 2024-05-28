@@ -114,7 +114,7 @@ class Trainer:
 
         st_epoch = 0
         best_train_loss = float('inf')
-        cum_train_loss = 1
+        cum_train_loss = [1]
         old_cum_train_loss = np.average(cum_train_loss)
 
         if self.train_continue == 'on':
@@ -135,7 +135,7 @@ class Trainer:
                 output_img = model(input_img)
                 loss = criterion(output_img, target_img)
                 train_loss += loss.item() 
-                cum_train_loss += loss.item() 
+                cum_train_loss.append(loss.item())
                 loss.backward()
                 optimizer.step()
                 
