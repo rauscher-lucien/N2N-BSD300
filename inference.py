@@ -99,9 +99,9 @@ def main():
         print(f"Project name: {project_name}")
     else:
         # If not running on the server, perhaps use a default data_dir or handle differently
-        train_file_path = r"C:\Users\rausc\Documents\EMBL\data\BSD300_one\double_noisy\noised_12003_16bit_gray.tif"
-        target_file_path = r"C:\Users\rausc\Documents\EMBL\data\BSD300_one\double_noisy\noised_12003_16bit_gray.tif"
-        project_dir = r"Z:\members\Rauscher\projects\N2N-BSD300\BSD-test_2"
+        train_file_path = r"C:\Users\rausc\Documents\EMBL\data\BSD300_one\gaussian-8bit\double_noisy\noised_12003_8bit_gray.jpg"
+        target_file_path = r"C:\Users\rausc\Documents\EMBL\data\BSD300_one\gaussian-8bit\double_noisy\noised_12003_8bit_gray.jpg"
+        project_dir = r"Z:\members\Rauscher\projects\N2N-BSD300\BSD-8bit-test_3"
         inference_name = 'BSD1'
 
     #********************************************************#
@@ -129,6 +129,7 @@ def main():
     mean, std = load_normalization_params(checkpoints_dir)
     
     inf_transform = transforms.Compose([
+        ToFloat32(),
         NormalizePair(mean, std),
         CropToMultipleOf16Inference(),
         ToTensorPair(),
@@ -139,7 +140,7 @@ def main():
         Denormalize(mean, std)
     ])
 
-    inf_dataset = N2NJPGDataset(input_image_path=train_file_path,
+    inf_dataset = N2NJPG8bitDataset(input_image_path=train_file_path,
                                       target_image_path=target_file_path,
                                       transform=inf_transform)
 
@@ -170,6 +171,7 @@ def main():
             # Generate the output images
             output_img = model(input_img)
             output_img_np = inv_inf_transform(output_img)
+            plot_intensity_distribution(output_img_np)
 
             # plot_intensity_line_distribution(input_img, 'in#put')
             # plot_intensity_line_distribution(output_img_np, 'out#put')
@@ -178,19 +180,14 @@ def main():
             output_img_clipped = output_img_np.squeeze(0)
             output_img_clipped = output_img_clipped.squeeze(-1)
 
-            # Convert the numpy array to a PIL Image
-            output_img_pil = Image.fromarray(output_img_clipped, mode='I;16')
+            # Ensure the output is within the 8-bit range
+            output_img_clipped = np.clip(output_img_clipped, 0, 255).astype(np.uint8)
 
-            # Define the filename and the path
-            filename = f'output_image-{inference_name}-epoch{epoch}.tif'
-            filepath = os.path.join(inference_folder, filename)
+            # Save the output image using PIL
+            output_img_pil = Image.fromarray(output_img_clipped, mode='L')  # Ensure it's grayscale
+            output_img_pil.save(os.path.join(inference_folder, 'output.jpg'), format='JPEG')
 
-            # Save the image as a TIFF file
-            output_img_pil.save(filepath, 'TIFF')
-
-            plt.imsave('output.png', output_img_clipped, cmap='gray')
-
-            print("Output TIFF image created successfully.")
+            print("Output JPG image created successfully.")
 
 
 

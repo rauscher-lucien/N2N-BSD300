@@ -155,6 +155,8 @@ class Trainer:
                     plt.imsave(target_filename, target_img_np[j, :, :, 0], cmap='gray')
                     plt.imsave(output_filename, output_img_np[j, :, :, 0], cmap='gray')
 
+            
+
                 new_cum_train_loss = np.average(cum_train_loss)
                 if new_cum_train_loss < old_cum_train_loss:
                     old_cum_train_loss = new_cum_train_loss
@@ -162,10 +164,8 @@ class Trainer:
                     print(f"Saved best model at epoch {epoch} with train loss {new_cum_train_loss:.4f}.")
 
 
-            print(f'Epoch [{epoch}/{self.num_epoch}], Train Loss: {np.average(cum_train_loss):.4f}')
+            self.writer.add_scalar('Loss/train', train_loss / len(train_loader), epoch)
 
-            
-
-            
+            print(f'Epoch [{epoch}/{self.num_epoch}], Train Loss: {np.average(cum_train_loss):.4f}')    
  
         self.writer.close()

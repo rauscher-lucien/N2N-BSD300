@@ -144,24 +144,53 @@ def load_min_max_params(data_dir):
 
 
 
-def plot_intensity_distribution(image_array, block_execution=True):
-    """
-    Plots the intensity distribution and controls execution flow based on 'block_execution'.
-    """
-    # Create a new figure for each plot to avoid conflicts
-    fig, ax = plt.subplots(figsize=(10, 6))
-    ax.hist(image_array.flatten(), bins=50, color='blue', alpha=0.7)
-    ax.set_title('Intensity Distribution')
-    ax.set_xlabel('Intensity Value')
-    ax.set_ylabel('Frequency')
-    ax.grid(True, which='both', linestyle='--', linewidth=0.5)
+def plot_intensity_distribution(data_list, bins=256, save_path=None, legend_fontsize=10, plot_type='histogram'):
+    plt.figure(figsize=(10, 5))
     
-    if block_execution:
-        plt.show()
+    line_labels = {}
+    
+    for idx, data in enumerate(data_list):
+        label = input(f"Enter the label for dataset {idx + 1} (or press Enter to use the default label): ").strip()
+        line_labels[idx] = label if label else f"Dataset {idx + 1}"
+    
+    for idx, data in enumerate(data_list):
+        label = line_labels[idx]
+        
+        # Convert tensor to numpy array if needed
+        if torch.is_tensor(data):
+            data = data.numpy()
+            if data.ndim == 3:  # Assuming the tensor is in the format (channels, height, width)
+                data = np.transpose(data, (1, 2, 0))  # Convert to (height, width, channels)
+            data = data.squeeze()  # Remove single-dimensional entries
+
+        # Ensure data is 2D
+        if data.ndim == 3 and data.shape[2] == 1:
+            data = data[:, :, 0]
+        elif data.ndim != 2:
+            raise ValueError("Input data must be a 2D array or a tensor that can be converted to a 2D array.")
+        
+        # Use numpy.histogram to bin the pixel intensity data
+        intensity_values, bin_edges = np.histogram(data, bins=bins, range=(0, 255))
+        # Calculate bin centers from edges
+        bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
+
+        if plot_type == 'line':
+            plt.plot(bin_centers, intensity_values, label=label)
+        elif plot_type == 'histogram':
+            plt.hist(data.ravel(), bins=bins, range=(0, 255), alpha=0.5, label=label)
+
+    plt.title('Pixel Intensity Distribution for 8-bit Grayscale Images')
+    plt.xlabel('Pixel Intensity')
+    plt.ylabel('Frequency')
+    plt.legend(fontsize=legend_fontsize)
+    plt.grid(True)
+
+    # Save the figure
+    if save_path:
+        plt.savefig(os.path.join(save_path, 'intensity_distribution-poisson-8bit.png'), format='png', dpi=300)
+        plt.close()  # Close the figure to free up memory
     else:
-        plt.draw()
-        plt.pause(1)  # Allows GUI to update
-        plt.close(fig)  # Close the new figure explicitly
+        plt.show()
 
 
 def get_file_path(local_path, remote_path):

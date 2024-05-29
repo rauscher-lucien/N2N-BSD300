@@ -320,7 +320,7 @@ class CropToMultipleOf16Inference(object):
             numpy.ndarray: Cropped image.
         """
         input_img = data[0]
-        _, h, w = input_img.shape  # Assuming img is a numpy array with shape (H, W, C) or (H, W)
+        h, w, _ = input_img.shape  # Assuming img is a numpy array with shape (H, W, C) or (H, W)
 
         # Compute new dimensions to be multiples of 16
         new_h = h - (h % 16)
@@ -335,7 +335,7 @@ class CropToMultipleOf16Inference(object):
         id_x = np.arange(left, left + new_w, 1).astype(np.int32)
 
         # Crop the image
-        cropped_image = input_img[:, id_y, id_x]
+        cropped_image = input_img[id_y, id_x, :]
 
         return cropped_image, cropped_image
 

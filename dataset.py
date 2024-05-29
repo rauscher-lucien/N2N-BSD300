@@ -59,5 +59,3 @@ class N2NJPG8bitDataset(torch.utils.data.Dataset):
             input_image, target_image = self.transform((input_image, target_image))
 
         return input_image, target_image
-
-
