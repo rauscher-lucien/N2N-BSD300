@@ -80,9 +80,9 @@ class Trainer:
         print(f"Execution time: {execution_time} seconds")
 
         transform_train = transforms.Compose([
+            ToFloat32(),
             NormalizePair(mean, std),
             RandomCropPair(output_size=(64,64)),
-            RandomHorizontalFlipPair(),
             ToTensorPair()
         ])
 
@@ -92,7 +92,7 @@ class Trainer:
         ])
 
 
-        train_dataset = N2NJPGDataset(input_image_path=self.train_file_path,
+        train_dataset = N2NJPG8bitDataset(input_image_path=self.train_file_path,
                                       target_image_path=self.target_file_path,
                                       transform=transform_train)
     

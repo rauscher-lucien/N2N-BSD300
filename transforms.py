@@ -10,28 +10,13 @@ import copy
 from utils import *
 
 class NormalizePair(object):
-    """
-    Normalize a pair of single-channel images using mean and standard deviation.
-
-    Args:
-        mean (float): Mean for the channel.
-        std (float): Standard deviation for the channel.
-    """
 
     def __init__(self, mean, std):
         self.mean = mean
         self.std = std
 
     def __call__(self, imgs):
-        """
-        Normalize each image in a tuple with dimensions (1, H, W).
 
-        Args:
-            imgs (tuple of numpy.ndarray): Tuple of images to be normalized, each expected to be in the format (1, H, W).
-
-        Returns:
-            tuple of numpy.ndarray: Tuple of normalized images.
-        """
         input_image, target_image = imgs
 
         # Normalize the input image
@@ -43,6 +28,30 @@ class NormalizePair(object):
         return (normalized_input_image, normalized_target_image)
 
 
+
+class ToFloat32(object):
+    """
+    Convert a tuple of single-channel images to float32 format without changing the scaling.
+    """
+
+    def __call__(self, imgs):
+        """
+        Convert a tuple of single-channel images to float32 format.
+
+        Args:
+            imgs (tuple): The input must be a tuple where each element is a single-channel image
+            in the format (H, W, 1) or (H, W).
+
+        Returns:
+            tuple: Each converted image as a float32 numpy array.
+        """
+        def convert_image(img):
+            return img.astype(np.float32)
+
+        if isinstance(imgs, tuple):
+            return tuple(convert_image(img) for img in imgs)
+        else:
+            raise TypeError("Input must be a tuple of single-channel images.")
 
 
 
@@ -138,58 +147,27 @@ class RandomCrop(object):
 
 
 class RandomCropPair(object):
-    """
-    Randomly crop a pair of single-channel images to a specified size.
-    
-    Args:
-        output_size (tuple): The target output size (height, width).
-    """
 
     def __init__(self, output_size=(64, 64)):
-        """
-        Initializes the RandomCrop transformer with the desired output size for pairs of images.
 
-        Parameters:
-        - output_size (tuple): The target output size (height, width).
-        """
         self.output_size = output_size
 
     def __call__(self, imgs):
-        """
-        Apply random cropping to a tuple of single-channel images each with dimensions (1, H, W).
 
-        Parameters:
-        - imgs (tuple of numpy.ndarray): Tuple of images to be cropped, each expected to be in the format (1, H, W).
-
-        Returns:
-        - tuple of numpy.ndarray: Tuple of randomly cropped images.
-        """
         input_image, target_image = imgs
 
         # Ensure both images have correct dimensions
-        assert input_image.ndim == 3 and input_image.shape[0] == 1, "Each image must have dimensions (1, H, W)."
-        assert target_image.ndim == 3 and target_image.shape[0] == 1, "Each image must have dimensions (1, H, W)."
+        assert input_image.ndim == 3 and input_image.shape[-1] == 1
+        assert target_image.ndim == 3 and target_image.shape[-1] == 1
 
-        _, h, w = input_image.shape
+        h, w, _ = input_image.shape
         new_h, new_w = self.output_size
 
-        if h > new_h and w > new_w:
-            # Apply the same random crop to both images
-            top = np.random.randint(0, h - new_h)
-            left = np.random.randint(0, w - new_w)
-            cropped_input_image = input_image[:, top:top + new_h, left:left + new_w]
-            cropped_target_image = target_image[:, top:top + new_h, left:left + new_w]
-        else:
-            # If either image is smaller than the crop size, apply padding
-            padding_top = (new_h - h) // 2 if new_h > h else 0
-            padding_left = (new_w - w) // 2 if new_w > w else 0
-            padding_bottom = new_h - h - padding_top if new_h > h else 0
-            padding_right = new_w - w - padding_left if new_w > w else 0
-
-            cropped_input_image = np.pad(input_image, ((0, 0), (padding_top, padding_bottom), (padding_left, padding_right)),
-                                         mode='constant', constant_values=0)  # Can modify padding mode and value if needed
-            cropped_target_image = np.pad(target_image, ((0, 0), (padding_top, padding_bottom), (padding_left, padding_right)),
-                                          mode='constant', constant_values=0)  # Can modify padding mode and value if needed
+        # Apply the same random crop to both images
+        top = np.random.randint(0, h - new_h)
+        left = np.random.randint(0, w - new_w)
+        cropped_input_image = input_image[top:top + new_h, left:left + new_w, :]
+        cropped_target_image = target_image[top:top + new_h, left:left + new_w, :]
 
         return (cropped_input_image, cropped_target_image)
 
@@ -224,38 +202,6 @@ class RandomHorizontalFlip:
         if np.random.rand() > 0.5:
             img = np.flip(img, axis=2)  # Flip along the width axis, which is axis 2 for (1, H, W)
         return img
-
-
-class RandomHorizontalFlipPair:
-    """
-    Apply random horizontal flipping to a pair of single-channel images.
-    
-    Args:
-        None needed for initialization.
-    """
-
-    def __call__(self, imgs):
-        """
-        Apply random horizontal flipping to a tuple of single-channel images each with dimensions (1, H, W).
-        
-        Args:
-            imgs (tuple of numpy.ndarray): Tuple of images to potentially flip, each expected to be in the format (1, H, W).
-        
-        Returns:
-            tuple of numpy.ndarray: Tuple of horizontally flipped images, if applied.
-        """
-        input_image, target_image = imgs
-
-        # Ensure both images have correct dimensions
-        assert input_image.ndim == 3 and input_image.shape[0] == 1, "Each image must have dimensions (1, H, W)."
-        assert target_image.ndim == 3 and target_image.shape[0] == 1, "Each image must have dimensions (1, H, W)."
-
-        # Apply horizontal flipping with a 50% chance
-        if np.random.rand() > 0.5:
-            input_image = np.flip(input_image, axis=2)  # Flip along the width axis
-            target_image = np.flip(target_image, axis=2)  # Flip along the width axis
-
-        return (input_image, target_image)
 
 
 
@@ -296,7 +242,7 @@ class ToTensor(object):
 class ToTensorPair(object):
     """
     Convert a tuple of single-channel images to PyTorch tensors. This class is specifically
-    designed to handle tuples where each element is a single-channel image formatted as (1, H, W).
+    designed to handle tuples where each element is a single-channel image formatted as (H, W, 1).
     """
 
     def __call__(self, imgs):
@@ -305,15 +251,17 @@ class ToTensorPair(object):
 
         Args:
             imgs (tuple): The input must be a tuple where each element is a single-channel image
-            in the format (1, H, W).
+            in the format (H, W, 1).
 
         Returns:
             tuple: Each converted image as a PyTorch tensor in the format (1, H, W).
         """
         def convert_image(img):
             # Check image dimensions and convert to tensor
-            if img.ndim != 3 or img.shape[0] != 1:
-                raise ValueError("Unsupported image format: each image must be 2D with a single channel (1, H, W).")
+            if img.ndim != 3 or img.shape[-1] != 1:
+                raise ValueError("Unsupported image format: each image must be 2D with a single channel (H, W, 1).")
+            # Transpose dimensions to (1, H, W)
+            img = np.transpose(img, (2, 0, 1))
             return torch.from_numpy(img.astype(np.float32))
 
         if isinstance(imgs, tuple):
@@ -495,7 +443,7 @@ class ToNumpy(object):
 
 class Denormalize(object):
     """
-    Denormalize an image using mean and standard deviation, then convert it to 16-bit format.
+    Denormalize an image using mean and standard deviation, then convert it to 8-bit format.
     
     Args:
         mean (float or tuple): Mean for each channel.
@@ -515,18 +463,21 @@ class Denormalize(object):
     
     def __call__(self, img):
         """
-        Denormalize the image and convert it to 16-bit format.
+        Denormalize the image and convert it to 8-bit format.
         
         Args:
-            img (numpy array): Normalized image.
+            img (numpy array): Normalized image in float32.
         
         Returns:
-            numpy array: Denormalized 16-bit image.
+            numpy array: Denormalized 8-bit image.
         """
         # Denormalize the image by reversing the normalization process
         img_denormalized = (img * self.std) + self.mean
 
-        # Scale the image to the range [0, 65535] and convert to 16-bit unsigned integer
-        img_denormalized = img_denormalized.astype(np.uint16)
+        # Clip the values to the range [0, 255] to ensure they are within the 8-bit range
+        img_denormalized = np.clip(img_denormalized, 0, 255)
+
+        # Convert to 8-bit unsigned integer
+        img_denormalized = img_denormalized.astype(np.uint8)
         
         return img_denormalized

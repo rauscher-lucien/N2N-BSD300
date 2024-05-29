@@ -101,8 +101,8 @@ def main():
         # If not running on the server, perhaps use a default data_dir or handle differently
         train_file_path = r"C:\Users\rausc\Documents\EMBL\data\BSD300_one\double_noisy\noised_12003_16bit_gray.tif"
         target_file_path = r"C:\Users\rausc\Documents\EMBL\data\BSD300_one\double_noisy\noised_12003_16bit_gray.tif"
-        project_dir = r"Z:\members\Rauscher\projects\N2N-BSD300\BSD-test_1"
-        inference_name = 'BSD2'
+        project_dir = r"Z:\members\Rauscher\projects\N2N-BSD300\BSD-test_2"
+        inference_name = 'BSD1'
 
     #********************************************************#
 
